@@ -1,3 +1,0 @@
-# `nquery`
-
-## Normalsoft Desktop Database
