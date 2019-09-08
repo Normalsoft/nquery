@@ -3,6 +3,8 @@ using System;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
+using static System.Linq.Enumerable;
+using MarkdownTable;
 
 public class DatabaseService : IDisposable
 {
@@ -76,6 +78,39 @@ public class GuildDatabase : IDisposable
     cmd.Parameters.Add("@name", DbType.String).Value = tableName;
 
     return (cmd.ExecuteScalar() != null);
+  }
+
+  public SQLiteCommand CreateCommand(string cmd)
+  {
+    var command = Connection.CreateCommand();
+    command.CommandText = cmd;
+    return command;
+  }
+
+  public string QueryToTextTable(SQLiteCommand cmd)
+  {
+    using (var reader = cmd.ExecuteReader())
+    {
+      if (reader.FieldCount < 1) return "";
+      var ct = new MarkdownTableBuilder().WithHeader(
+        Range(0, reader.FieldCount)
+          .Select(x => reader.GetName(x)).ToArray()
+      );
+
+      while (reader.Read())
+      {
+        ct.WithRow(
+          Range(0, reader.FieldCount)
+            .Select(x => reader.GetValue(x).ToString()).ToArray()
+        );
+      }
+      return ct.ToString();
+    }
+  }
+
+  public Object QueryToValue(SQLiteCommand cmd)
+  {
+    return cmd.ExecuteScalar();
   }
 
   public void Dispose()

@@ -22,37 +22,21 @@ namespace Modules
       this.database = dbs;
     }
 
-    [Command("SQL")]
-    public async Task Execute([Remainder]string cmd)
+    [Command("Table")]
+    [Alias("tq")]
+    public async Task TableQuery([Remainder]string cmd)
     {
-      ulong gid = Context.Guild.Id;
-      if (!database.Exists($"dc-{gid}"))
+      if (!database.Exists($"dc-{Context.Guild.Id}"))
         await Context.Message.AddReactionAsync(new Emoji("📡"));
-      GuildDatabase db = database.GetOrInitDatabase($"dc-{gid}");
-      var command = db.Connection.CreateCommand();
-      command.CommandText = cmd;
+      GuildDatabase db = database.GetOrInitDatabase($"dc-{Context.Guild.Id}");
+      var command = db.CreateCommand(cmd);
 
       try
       {
-        using (var reader = command.ExecuteReader())
-        {
-          await Context.Message.AddReactionAsync(new Emoji("🆗"));
-          if (reader.FieldCount < 1) return;
-
-          var ct = new MarkdownTableBuilder().WithHeader(
-            Range(0, reader.FieldCount)
-              .Select(x => reader.GetName(x)).ToArray()
-          );
-
-          while (reader.Read())
-          {
-            ct.WithRow(
-              Range(0, reader.FieldCount)
-                .Select(x => reader.GetValue(x).ToString()).ToArray()
-            );
-          }
-          await ReplyAsync("```\n" + ct.ToString() + "\n```");
-        }
+        var tt = db.QueryToTextTable(command);
+        await Context.Message.AddReactionAsync(new Emoji("🆗"));
+        if (tt.Length > 0)
+          await ReplyAsync("```\n" + tt + "\n```");
       }
       catch (DbException e)
       {
@@ -60,7 +44,29 @@ namespace Modules
       }
     }
 
-    [Command("DC")]
+    [Command("Scalar")]
+    [Alias("sq")]
+    public async Task ScalarQuery([Remainder] string cmd)
+    {
+      if (!database.Exists($"dc-{Context.Guild.Id}"))
+        await Context.Message.AddReactionAsync(new Emoji("📡"));
+      GuildDatabase db = database.GetOrInitDatabase($"dc-{Context.Guild.Id}");
+      var command = db.CreateCommand(cmd);
+
+      try
+      {
+        var tt = db.QueryToValue(command).ToString();
+        await Context.Message.AddReactionAsync(new Emoji("🆗"));
+        await ReplyAsync(tt);
+      }
+      catch (DbException e)
+      {
+        await ReplyAsync(":exclamation: " + e.Message.Replace("SQL logic error\n", "").Trim());
+      }
+    }
+
+    [Command("Disconnect")]
+    [Alias("dc")]
     public async Task Disconnect()
     {
       string dbid = $"dc-{Context.Guild.Id}";
@@ -73,7 +79,8 @@ namespace Modules
       await Context.Message.AddReactionAsync(new Emoji("🗑"));
     }
 
-    [Command("Co")]
+    [Command("Connect")]
+    [Alias("co")]
     public async Task Connect()
     {
       string dbid = $"dc-{Context.Guild.Id}";
@@ -86,14 +93,17 @@ namespace Modules
       }
     }
 
-    [Command("DBN")]
-    public async Task DBName()
+    [Command("DBName")]
+    [Alias("dbn")]
+    public async Task DbName()
     {
       string dbid = $"dc-{Context.Guild.Id}";
       await ReplyAsync(
         $"Database name is `{dbid}`.\n"
         + $"Database is {(database.Exists(dbid) ? "connected" : "disconnected")}.");
     }
+
+
   }
 
 }

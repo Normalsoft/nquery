@@ -55,7 +55,6 @@ public class Bot : IDisposable
 
     if (message == null) return;
 
-    SocketGuildChannel channel = (SocketGuildChannel)message.Channel;
     SocketCommandContext context = new SocketCommandContext(Client, message);
 
     if (!(message.HasStringPrefix(ConfigService.config["prefix"], ref argPos) ||
