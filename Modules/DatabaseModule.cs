@@ -26,8 +26,9 @@ namespace Modules
     public async Task Execute([Remainder]string cmd)
     {
       ulong gid = Context.Guild.Id;
-      if (Check(gid)) await Context.Message.AddReactionAsync(new Emoji("📡"));
-      GuildDatabase db = database.GetDatabase(gid);
+      if (!database.Exists($"dc-{gid}"))
+        await Context.Message.AddReactionAsync(new Emoji("📡"));
+      GuildDatabase db = database.GetOrInitDatabase($"dc-{gid}");
       var command = db.Connection.CreateCommand();
       command.CommandText = cmd;
 
@@ -59,16 +60,40 @@ namespace Modules
       }
     }
 
-    private bool Check(ulong gid)
+    [Command("DC")]
+    public async Task Disconnect()
     {
-      if (!database.Exist(gid))
+      string dbid = $"dc-{Context.Guild.Id}";
+      if (!database.Exists(dbid))
       {
-        database.AddDatabase(gid);
-        return true;
+        await Context.Message.AddReactionAsync(new Emoji("❌"));
+        return;
       }
-      return false;
+      database.DisposeDatabase(dbid);
+      await Context.Message.AddReactionAsync(new Emoji("🗑"));
     }
 
+    [Command("Co")]
+    public async Task Connect()
+    {
+      string dbid = $"dc-{Context.Guild.Id}";
+      if (database.Exists(dbid))
+        await Context.Message.AddReactionAsync(new Emoji("✅"));
+      else
+      {
+        database.AddDatabase(dbid);
+        await Context.Message.AddReactionAsync(new Emoji("📡"));
+      }
+    }
+
+    [Command("DBN")]
+    public async Task DBName()
+    {
+      string dbid = $"dc-{Context.Guild.Id}";
+      await ReplyAsync(
+        $"Database name is `{dbid}`.\n"
+        + $"Database is {(database.Exists(dbid) ? "connected" : "disconnected")}.");
+    }
   }
 
 }

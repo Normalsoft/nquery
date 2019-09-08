@@ -6,14 +6,15 @@ using System.IO;
 
 public class DatabaseService : IDisposable
 {
-  public Dictionary<ulong, GuildDatabase> Databases = new Dictionary<ulong, GuildDatabase>();
+  public Dictionary<string, GuildDatabase> Databases = new Dictionary<string, GuildDatabase>();
 
   private static DatabaseService instance = new DatabaseService();
 
   public static DatabaseService Instance { get => instance; }
 
-  public void AddDatabase(ulong gid)
+  public void AddDatabase(string gid)
   {
+    if (Exists(gid)) return;
     if (!Directory.Exists(".db")) Directory.CreateDirectory(".db");
 
     GuildDatabase gdb = new GuildDatabase();
@@ -23,7 +24,7 @@ public class DatabaseService : IDisposable
     Databases.Add(gid, gdb);
   }
 
-  public void DisposeDatabase(ulong gid)
+  public void DisposeDatabase(string gid)
   {
     if (!Databases.ContainsKey(gid))
       throw new Exception("Requested guild has no database.");
@@ -32,21 +33,25 @@ public class DatabaseService : IDisposable
     Databases.Remove(gid);
   }
 
-  public bool Exist(ulong gid) => Databases.ContainsKey(gid);
+  public bool Exists(string gid) => Databases.ContainsKey(gid);
 
-  public GuildDatabase GetDatabase(ulong gid)
+  public GuildDatabase GetDatabase(string gid)
   {
     if (!Databases.ContainsKey(gid))
       throw new Exception("Requested guild has no database.");
     return Databases[gid];
   }
 
+  public GuildDatabase GetOrInitDatabase(string gid)
+  {
+    if (!Exists(gid)) AddDatabase(gid);
+    return GetDatabase(gid);
+  }
+
   public void Dispose()
   {
     foreach (var gdb in Databases)
-    {
       gdb.Value.Dispose();
-    }
   }
 }
 
