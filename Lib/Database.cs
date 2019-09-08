@@ -87,7 +87,7 @@ public class GuildDatabase : IDisposable
     return command;
   }
 
-  public string QueryToTextTable(SQLiteCommand cmd)
+  public string QueryToMarkdownTable(SQLiteCommand cmd)
   {
     using (var reader = cmd.ExecuteReader())
     {
@@ -98,23 +98,74 @@ public class GuildDatabase : IDisposable
       );
 
       while (reader.Read())
-      {
         ct.WithRow(
           Range(0, reader.FieldCount)
             .Select(x => reader.GetValue(x).ToString()).ToArray()
         );
-      }
       return ct.ToString();
     }
   }
 
-  public Object QueryToValue(SQLiteCommand cmd)
+  public string QueryToCsv(SQLiteCommand cmd, bool includeHeaders = false)
   {
-    return cmd.ExecuteScalar();
+    using (var reader = cmd.ExecuteReader())
+    {
+      if (reader.FieldCount < 1) return "";
+      string text = "";
+      if (includeHeaders)
+        String.Join(",",
+          Range(0, reader.FieldCount).Select(x => reader.GetName(x)).ToArray());
+
+      while (reader.Read())
+        text += String.Join(",", Range(0, reader.FieldCount)
+          .Select(x => reader.GetValue(x).ToString()).ToArray()) + "\n";
+      return text;
+    }
   }
 
-  public void Dispose()
+  public Object QueryToScalar(SQLiteCommand cmd) => cmd.ExecuteScalar();
+
+  public void Dispose() => Connection.Dispose();
+
+  public enum QueryOutputType
   {
-    Connection.Dispose();
+    MarkdownTable, Scalar, Csv
   }
+
+  public static QueryOutputType QueryTypeShorthand(string sh)
+  {
+    switch (sh)
+    {
+      case "t":
+      case "table":
+      case "tab":
+      case "md":
+        return QueryOutputType.MarkdownTable;
+      case "s":
+      case "scalar":
+      case "sc":
+        return QueryOutputType.Scalar;
+      case "c":
+      case "csv":
+        return QueryOutputType.Csv;
+      default:
+        throw new UserCommandException("no such query output type");
+    }
+  }
+
+  public string Query(QueryOutputType type, SQLiteCommand cmd)
+  {
+    switch (type)
+    {
+      case QueryOutputType.MarkdownTable: return QueryToMarkdownTable(cmd);
+      case QueryOutputType.Scalar: return QueryToScalar(cmd)?.ToString() ?? "";
+      case QueryOutputType.Csv: return QueryToCsv(cmd);
+      default: throw new Exception("invalid QueryOutputType");
+    }
+  }
+}
+
+public class UserCommandException : Exception
+{
+  public UserCommandException(string message) : base(message) { }
 }

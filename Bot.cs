@@ -54,13 +54,16 @@ public class Bot : IDisposable
     SocketUserMessage message = (SocketUserMessage)messageParam;
 
     if (message == null) return;
+    if ((SocketGuildChannel)messageParam.Channel == null) return;
 
     SocketCommandContext context = new SocketCommandContext(Client, message);
 
     if (!(message.HasStringPrefix(ConfigService.config["prefix"], ref argPos) ||
         message.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
-    var result = await Commands.ExecuteAsync(context, argPos, Services);
+    var cmdcontent = message.ToString().Substring(argPos);
+
+    var result = await Commands.ExecuteAsync(context, cmdcontent, Services);
     if (result.IsSuccess) return;
     new Thread(async () =>
     {
