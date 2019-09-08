@@ -26,7 +26,7 @@ namespace Modules
     public async Task Execute([Remainder]string cmd)
     {
       ulong gid = Context.Guild.Id;
-      if (Check(gid)) await ReplyAsync(":ok: Initialized a connection for your server.");
+      if (Check(gid)) await Context.Message.AddReactionAsync(new Emoji("📡"));
       GuildDatabase db = database.GetDatabase(gid);
       var command = db.Connection.CreateCommand();
       command.CommandText = cmd;
@@ -36,6 +36,7 @@ namespace Modules
         using (var reader = command.ExecuteReader())
         {
           await Context.Message.AddReactionAsync(new Emoji("🆗"));
+          if (reader.FieldCount < 1) return;
 
           var ct = new MarkdownTableBuilder().WithHeader(
             Range(0, reader.FieldCount)
