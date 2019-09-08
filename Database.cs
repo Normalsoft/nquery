@@ -14,10 +14,10 @@ public class DatabaseService : IDisposable
 
   public void AddDatabase(ulong gid)
   {
-    if (!Directory.Exists("Databases")) Directory.CreateDirectory("Databases");
+    if (!Directory.Exists(".db")) Directory.CreateDirectory(".db");
 
     GuildDatabase gdb = new GuildDatabase();
-    if (!gdb.Start($"Databases/{gid}.db"))
+    if (!gdb.Start($".db/{gid}.db"))
       throw new Exception("Failed to load/create database.");
 
     Databases.Add(gid, gdb);

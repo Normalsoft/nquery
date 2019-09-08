@@ -222,7 +222,6 @@ namespace MarkdownTable
     private readonly char horizontalChar;
     private readonly char outerBorderChar;
     private readonly int padding;
-    private readonly int minColumnWidth;
     private readonly StringBuilder rowBuilder;
 
     private enum Align
