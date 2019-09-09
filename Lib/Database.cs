@@ -74,8 +74,8 @@ public class GuildDatabase : IDisposable
   public bool TableExists(String tableName)
   {
     SQLiteCommand cmd = Connection.CreateCommand();
-    cmd.CommandText = $"SELECT name FROM sqlite_master WHERE type='table' AND name='@name';";
-    cmd.Parameters.Add("@name", DbType.String).Value = tableName;
+    cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name=@name";
+    cmd.Parameters.AddWithValue("@name", tableName);
 
     return (cmd.ExecuteScalar() != null);
   }
@@ -162,6 +162,67 @@ public class GuildDatabase : IDisposable
       case QueryOutputType.Csv: return QueryToCsv(cmd);
       default: throw new Exception("invalid QueryOutputType");
     }
+  }
+
+  public void StoreQuery(string name, string opts, string rest)
+  {
+    if (!TableExists("nquery_queries"))
+    {
+      CreateCommand(
+        @"CREATE TABLE nquery_queries (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          body TEXT NOT NULL,
+          opts TEXT NOT NULL)"
+      ).ExecuteScalar();
+    }
+    var cmd = CreateCommand(@"INSERT OR REPLACE INTO nquery_queries 
+      (name, body, opts) VALUES (@name, @body, @opts)");
+    cmd.Parameters.AddWithValue("@name", name);
+    cmd.Parameters.AddWithValue("@body", rest);
+    cmd.Parameters.AddWithValue("@opts", opts);
+    cmd.ExecuteScalar();
+  }
+
+  public Dictionary<string, string> RecallOptions(string name)
+  {
+    var cmd = CreateCommand(@"SELECT opts FROM nquery_queries WHERE name = @name");
+    cmd.Parameters.AddWithValue("@name", name);
+    return MiscUtil.ExtractOpts(cmd.ExecuteScalar()?.ToString() ?? "");
+  }
+
+  public string RecallQuery(QueryOutputType type, string name, string[] args)
+  {
+    var cmd = CreateCommand(@"SELECT body FROM nquery_queries WHERE name = @name");
+    cmd.Parameters.AddWithValue("@name", name);
+    var sql = cmd.ExecuteScalar()?.ToString();
+    if (sql == null) throw new UserCommandException($"no such stored query: {name}");
+    var cmd2 = CreateCommand(sql);
+    cmd2.Parameters.AddWithValue("@0", String.Join(" ", args));
+    for (var i = 0; i < args.Length; i++)
+    {
+      cmd2.Parameters.AddWithValue($"@{i + 1}", args[i]);
+    }
+    return Query(type, cmd2);
+  }
+
+  public void DeleteStoredQuery(string name)
+  {
+    var cmd = CreateCommand(@"DELETE FROM nquery_queries WHERE name = @name");
+    cmd.Parameters.AddWithValue("@name", name);
+    if (cmd.ExecuteScalar() == null)
+      throw new UserCommandException($"no such stored query: {name}");
+  }
+
+  public string[] ListQueryNames()
+  {
+    var cmd = CreateCommand(@"SELECT name FROM nquery_queries");
+    string[] names = new string[] { };
+    using (var reader = cmd.ExecuteReader())
+    {
+      while (reader.Read()) names = names.Append(reader.GetValue(0).ToString()).ToArray();
+    }
+    return names;
   }
 }
 

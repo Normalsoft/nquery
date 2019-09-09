@@ -20,11 +20,7 @@ namespace Modules
     [Alias("gq", "q")]
     public async Task GenericQuery(string opts, [Remainder] string cmd)
     {
-      var options = MiscUtil.ExtractOpts("");
-      if (opts.StartsWith("?"))
-        options = MiscUtil.ExtractOpts(opts);
-      else
-        cmd = opts + " " + cmd;
+      var options = MiscUtil.ExtractOrNot(opts, ref cmd);
       if (options.ContainsKey("t")) options.Add("type", options["t"]);
       if (!options.ContainsKey("type")) options.Add("type", "table");
 

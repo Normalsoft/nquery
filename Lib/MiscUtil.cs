@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
+using System;
 
 public class MiscUtil
 {
@@ -21,9 +23,23 @@ public class MiscUtil
     foreach (var pair in str.Split('&'))
     {
       var key = pair.Split('=', 2);
-      if (key.Length == 2) opts.Add(key[0], key[1]);
-      else opts.Add(key[0], "true");
+      if (key.Length == 2 && key[0].Length > 0) opts.Add(key[0], key[1]);
+      else if (key[0].Length > 0) opts.Add(key[0], "true");
     }
     return opts;
   }
+
+  public static Dictionary<string, string> ExtractOrNot(string opts, ref string cmd)
+  {
+    var options = MiscUtil.ExtractOpts("");
+    if (opts.StartsWith("?"))
+      options = MiscUtil.ExtractOpts(opts);
+    else
+      cmd = (opts + " " + cmd).Trim();
+    return options;
+  }
+
+  public static string DictToOpts(Dictionary<string, string> options) =>
+    String.Join("&", options.Keys.ToArray().Select(x => $"{x}={options[x]}"));
+
 }

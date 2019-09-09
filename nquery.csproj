@@ -14,5 +14,6 @@
     <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1"/>
     <PackageReference Include="System.Data.SQLite" Version="1.0.111"/>
     <PackageReference Include="EPPlus" Version="4.5.3.2"/>
+    <PackageReference Include="Rant" Version="3.0.531"/>
   </ItemGroup>
 </Project>
