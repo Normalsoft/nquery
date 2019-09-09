@@ -20,7 +20,15 @@ namespace Modules
     [Alias("qs")]
     public async Task StoreQuery(string opts, string name, [Remainder]string rest)
     {
-      var options = MiscUtil.ExtractOrNot(opts, ref name);
+      Dictionary<string, string> options;
+      if (opts.StartsWith("?"))
+        options = MiscUtil.ExtractOpts(opts);
+      else
+      {
+        rest = name + " " + rest;
+        name = opts;
+        options = new Dictionary<string, string>();
+      }
       GuildDatabase db = dsv.GetOrInitDatabase($"dc-{Context.Guild.Id}");
       db.StoreQuery(name, MiscUtil.DictToOpts(options), rest);
       await Context.Message.AddReactionAsync(new Emoji("🆗"));
@@ -66,7 +74,7 @@ namespace Modules
       GuildDatabase db = dsv.GetOrInitDatabase($"dc-{Context.Guild.Id}");
       var names = db.ListQueryNames();
       if (names.Length > 0) await ReplyAsync(String.Join(", ", names));
-      else await Context.Message.AddReactionAsync(new Emoji("0"));
+      else await Context.Message.AddReactionAsync(new Emoji("⛔"));
     }
 
     [Command("Delete")]

@@ -208,10 +208,14 @@ public class GuildDatabase : IDisposable
 
   public void DeleteStoredQuery(string name)
   {
+    var chk = CreateCommand(@"SELECT name FROM nquery_queries WHERE name = @name");
+    chk.Parameters.AddWithValue("@name", name);
+    if (chk.ExecuteScalar() == null)
+      throw new UserCommandException($"no such stored query: {name}");
+
     var cmd = CreateCommand(@"DELETE FROM nquery_queries WHERE name = @name");
     cmd.Parameters.AddWithValue("@name", name);
-    if (cmd.ExecuteScalar() == null)
-      throw new UserCommandException($"no such stored query: {name}");
+    cmd.ExecuteScalar();
   }
 
   public string[] ListQueryNames()
