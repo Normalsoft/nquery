@@ -44,7 +44,7 @@ Runs on .NET Core 2.2.
 | `nq qs <name> <opts> <...query>`  | Store a query, optionally specifying options to be invoked when recalled.                                             |
 | `nq qr <name> <opts> <...params>` | Recall and run a query. Optionally override stored options, otherwise all further parameters are passed to the query. |
 | `nq ql`                           | List stored queries for the guild.                                                                                    |
-| `nq qd <name></name>`             | Delete a stored query.                                                                                                |
+| `nq qd <name>`                    | Delete a stored query.                                                                                                |
 
 `opts` is text (optionally quotable) recognized similarly to URL query parameters, i.e. `?type=table&nowrap` (where no `=` means `nowrap=true`). `opts` will generally be folded into the rest of the command (e.g. the body of your SQL query) if it does not begin with a question mark.
 
