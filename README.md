@@ -40,7 +40,7 @@ Runs on .NET Core 2.2.
 | `nq (tq,sq,cq) <...query>`        | Query with pre-filled `type` being `table`, `scalar`, or `csv` respectively.                                          |
 | `nq dc`                           | Disconnect the guild's SQLite session. This frees memory and ensures the database is written entirely to disk.        |
 | `nq co`                           | Connect the guild's SQLite session. Loads the database from disk. Done implicitly upon any query.                     |
-| `nq dbn`                          | Show's the internal filename of the database and other info.                                                          |
+| `nq dbn`                          | Shows the internal filename of the database and other info.                                                           |
 | `nq qs <name> <opts> <...query>`  | Store a query, optionally specifying options to be invoked when recalled.                                             |
 | `nq qr <name> <opts> <...params>` | Recall and run a query. Optionally override stored options, otherwise all further parameters are passed to the query. |
 | `nq ql`                           | List stored queries for the guild.                                                                                    |
